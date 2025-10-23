@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:biocue/themes/colors.dart';
 
 class HorizontalCalendar extends StatelessWidget {
   final DateTime startDate;

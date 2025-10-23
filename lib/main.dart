@@ -14,7 +14,6 @@ import 'package:uni_links/uni_links.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await dotenv.load();
 
   await Supabase.initialize(
@@ -23,7 +22,8 @@ void main() async {
   );
 
   final prefs = await SharedPreferences.getInstance();
-  // Checks if there’s a valid Supabase session.
+
+  // Checks if there’s a valid Supabase session via supabase methods built in for user auth flow
   final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
 
   await prefs.setBool('isLoggedIn', isLoggedIn);

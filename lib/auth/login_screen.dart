@@ -14,6 +14,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 
+import '../config.dart';
+
 // ------------------------------------< Parent Widget >-----------------------------------------
 
 class LoginScreen extends StatefulWidget {
@@ -33,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isGoogleLoading = false;
 
   // ---------------------------------------------------------
-  // ---------------< Init State - Setup Auth Listener >------
+  // ---------------< Init State >---------------------------
   // ---------------------------------------------------------
 
   // these are basically Reload or Clean functions
@@ -58,8 +60,15 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // This sets up a listener for Supabase’s authentication state changes.
-  // If a session (i.e., a logged-in user) is detected, it calls _handleSuccessfulGoogleLogin() with the user info.
+  // ---------------------------------------------------------
+  // ---------------< Google/Supabase Auth Listener >-----------
+  // ---------------------------------------------------------
+
+  // This sets up a listener for Supabase’s authentication state changes that the front end manages
+
+  // ---------------< this is what happens after the user is redirected back to the app via callback >-----------
+  // so here it then grabs the auth info it needs from the auth user that was created in supabase
+
   void _setupAuthListener() {
     // Supabase sends a data object that contains a session.
     _authSubscription = supabase.Supabase.instance.client.auth.onAuthStateChange
@@ -68,10 +77,15 @@ class _LoginScreenState extends State<LoginScreen> {
               .session; // This is the actual user object inside the session.
 
           if (session != null && mounted) {
-            _handleSuccessfulGoogleLogin(session.user);
+            // if the required user data aka session is there we run the next function
+            _handleSuccessfulGoogleLogin(
+              session.user,
+            ); // run the next part of the login and pass the user data as parameter
           }
         });
   }
+
+  // this is then put inside a initState function that ensures your app reacts immediately when a user logs in with Google
 
   // ---------------------------------------------------------
   // ---------------< Handle Google Login Success >-----------
@@ -108,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // asking backend: does this Supabase-authenticated user also exist in our custom app database?
         final response = await http.get(
           Uri.parse(
-            'http://192.168.1.156:3000/check-user?email=${Uri.encodeComponent(user.email ?? '')}',
+            '${AppConfig.backendBaseUrl}/api/users/check-user?email=${Uri.encodeComponent(user.email ?? '')}',
           ),
         );
 
@@ -120,7 +134,23 @@ class _LoginScreenState extends State<LoginScreen> {
           if (data['exists'] == false || data['firstTimeLogin'] == true) {
             // Store the Supabase auth UUID in local storage for later use
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('pendingGoogleUuid', user.id);
+            await prefs.setString(
+              'pendingGoogleUuid',
+              user.id,
+            ); // set the uuid in local storage so we can use it later on
+
+            await http.post(
+              Uri.parse(
+                '${AppConfig.backendBaseUrl}/api/users/create-google-user',
+              ),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'uuid': user.id,
+                'email': user.email,
+                'firstTimeLogin': true,
+                // optionally include other fields like name, age, etc.
+              }),
+            );
 
             // New Google user - send to onboarding questions
             Navigator.of(
@@ -128,17 +158,27 @@ class _LoginScreenState extends State<LoginScreen> {
             ).pushReplacement(MaterialPageRoute(builder: (_) => const Q1()));
           } else {
             // Existing user - go to home
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
-            );
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+              );
+            }
           }
         }
       } catch (e) {
         print('Error checking user: $e');
-        // Default to Q1 if check fails
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => const Q1()));
+        // Default to Q1 if the user exists check fails
+        if (mounted) {
+          setState(() => _isGoogleLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Unable to check if user exists. Please try again.',
+              ),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }
@@ -151,6 +191,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _isGoogleLoading = true);
+
+    // Supabase opens a browser and redirects the user to Google's OAuth login page.
+    // The user hasn't selected an account yet — this just starts the login flow.
+    // Supabase handles the handshake and will receive the user info after the google login is complete.
+    // -----> this piece of code only waits for Supabase to launch the external browser and initiate the OAuth flow. <-------
 
     try {
       await supabase.Supabase.instance.client.auth.signInWithOAuth(
@@ -190,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
     print('Login function triggered');
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.156:3000/login'),
+        Uri.parse('${AppConfig.backendBaseUrl}/api/users/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,

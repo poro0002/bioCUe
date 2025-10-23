@@ -1,17 +1,18 @@
+import './subScreens/healingCenter.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-//-------------------------< SYMPTOM JOURNAL HOME WIDGET >-----------------------------------
+//-------------------------< HEALING CENTER HOME WIDGET >-----------------------------------
 
-class JournalPreviewCard extends StatelessWidget {
+class HealingContent extends StatelessWidget {
   final VoidCallback onTap;
+  const HealingContent({required this.onTap, super.key});
 
-  const JournalPreviewCard({required this.onTap, super.key});
+  // props
+  // constructors
+  // if needed
 
   @override
   Widget build(BuildContext context) {
-    final today = DateFormat.yMMMMd().format(DateTime.now());
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -34,7 +35,11 @@ class JournalPreviewCard extends StatelessWidget {
             const Positioned(
               top: 0,
               left: 0,
-              child: Icon(Icons.healing, size: 28, color: Color(0xFFFF6F61)),
+              child: Icon(
+                Icons.self_improvement,
+                size: 28,
+                color: Color(0xFFFF6F61),
+              ),
             ),
 
             Padding(
@@ -45,7 +50,7 @@ class JournalPreviewCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'Symptom Journal',
+                    'Healing Center',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.black,
@@ -54,18 +59,10 @@ class JournalPreviewCard extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Tap to log today’s symptoms or view past entries.',
+                    'Tap to see recommended meditation, yoga, lifestyle, white noise content',
                     style: TextStyle(fontSize: 14, color: Colors.black),
                   ),
                 ],
-              ),
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Text(
-                today,
-                style: TextStyle(fontSize: 10, color: Colors.grey),
               ),
             ),
           ],

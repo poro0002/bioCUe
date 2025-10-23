@@ -4,11 +4,10 @@ import './journal_screen.dart';
 import './progress_screen.dart';
 import './account_screen.dart';
 import '../widgets/home_widgets/calander.dart';
-
-import 'package:provider/provider.dart';
+import '../widgets/home_widgets/externalResources.dart';
+import '../widgets/home_widgets/healingContent.dart';
+import '../widgets/home_widgets/subScreens/healingCenter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -52,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------< Top Nav Builder >-----------------------------
+  // ----------< this is not building a widget, its a widget TREE >------------
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
-          padding: const EdgeInsets.all(12.0), // optional: adjust spacing
+          // top left placement of widgets
+          padding: const EdgeInsets.all(12.0),
           child: SizedBox(
             child: GestureDetector(
               child: CircleAvatar(
@@ -74,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          // actions is a list of widgets that appear in the AppBar’s top-right corner.
           // Notification Bell with Dropdown Placeholder
           PopupMenuButton<String>(
             icon: const Icon(Icons.notifications),
@@ -98,6 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onDateSelected: (date) => setState(() => selectedDate = date),
             email: email,
             onJournalTap: () => setState(() => _currentIndex = 1),
+            onHealingTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (context) => HealingCenter())),
           ),
           JournalScreen(),
           ProgressScreen(),
@@ -120,16 +125,20 @@ class HomeDashboard extends StatelessWidget {
   final Function(DateTime) onDateSelected;
   final String? email;
   final VoidCallback onJournalTap; // wtf is a void callback
+  final VoidCallback onHealingTap;
 
-  // Constructor
+  // ---------< Constructor >---------
   // heres what the widget NEEDs so it can function
   const HomeDashboard({
     required this.selectedDate,
     required this.onDateSelected,
     required this.email,
     required this.onJournalTap,
+    required this.onHealingTap,
     super.key,
   });
+
+  // ------< home dash builder >---------
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +161,8 @@ class HomeDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           JournalPreviewCard(onTap: onJournalTap),
+          ExternalResources(),
+          HealingContent(onTap: onHealingTap),
         ],
       ),
     );

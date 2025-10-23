@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import '../../config.dart';
+
 class finished extends StatefulWidget {
   const finished({super.key});
 
@@ -34,7 +36,7 @@ class _finishedState extends State<finished> {
       // Create the payload
       final payload = userProfile.toJson();
 
-      // Add UUID if this is a Google OAuth user
+      // Add UUID to the userProfile if this is a Google OAuth user
       if (googleUuid != null) {
         payload['uuid'] = googleUuid;
       } else if (supabaseUser != null) {
@@ -42,8 +44,11 @@ class _finishedState extends State<finished> {
         payload['uuid'] = supabaseUser.id;
       }
 
+      // ^^ this makes it so any user whether its a google sign up or just a traditional sign has a id that can be used for reference on a account
+
+      // sends the payload of userprofile data to the updateUserData endpoint
       final response = await http.post(
-        Uri.parse('http://192.168.1.156:3000/updateUserData'),
+        Uri.parse('${AppConfig.backendBaseUrl}/api/users/updateUserData'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
@@ -53,13 +58,15 @@ class _finishedState extends State<finished> {
 
         // Clear the pending UUID if it exists
         if (googleUuid != null) {
-          await prefs.remove('pendingGoogleUuid');
+          await prefs.remove(
+            'pendingGoogleUuid',
+          ); // get rid of the local uuid once its saved to that users data
         }
 
         Provider.of<UserProvider>(
           context,
           listen: false,
-        ).completeFirstTimeSetup();
+        ).completeFirstTimeSetup(); // call userProvider function to complete the registration log in.
       } else {
         print('there was an issue with saving userdata questions to supabase');
         print('Response: ${response.body}');

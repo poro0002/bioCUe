@@ -5,11 +5,13 @@ class UserProvider with ChangeNotifier {
   // This creates a private instance of your UserProfile model.
   UserProfile _profile = UserProfile();
 
+
+
   // This is a getter.
   // It lets other parts of your app read the _profile safely, without exposing it for direct modification.
   UserProfile get profile => _profile;
 
-  // ------------------< Basic Info >------------------
+  // ------------------< Reusable Functions >------------------
 
   void setName(String name) {
     _profile.name = name;

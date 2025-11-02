@@ -78,6 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
           if (session != null && mounted) {
             // if the required user data aka session is there we run the next function
+            print('Auth session user email: ${session.user.email}');
+
             _handleSuccessfulGoogleLogin(
               session.user,
             ); // run the next part of the login and pass the user data as parameter
@@ -101,12 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('email', user.email ?? '');
 
-    // Set user email info in provider
-    Provider.of<UserProvider>(
-      context,
-      listen: false,
-    ).setEmail(user.email ?? '');
-
     // runs the login function for provider with the user.email
 
     Provider.of<UserProvider>(context, listen: false).login(user.email ?? '');
@@ -128,6 +124,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
+
+          final appleAccess = data['appleHealthAccess'] ?? false;
+
+          Provider.of<UserProvider>(
+            context,
+            listen: false,
+          ).setAppleAccess(appleAccess);
 
           // If the user is new or it’s their first time logging in, you:
 
@@ -249,9 +252,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final data = jsonDecode(response.body);
         final userEmail = data['user']['email'];
+        final appleAccess = data['user']['appleHealthAccess'];
 
         Provider.of<UserProvider>(context, listen: false).setEmail(userEmail);
         Provider.of<UserProvider>(context, listen: false).login(userEmail);
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).setAppleAccess(appleAccess);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

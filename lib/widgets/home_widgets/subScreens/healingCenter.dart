@@ -10,15 +10,9 @@
 
 // state class will have all the links that have been fetched for that topic so it can loop through and create embedded links with the title and duration
 import 'package:flutter/material.dart';
-import 'package:googleapis/clouddeploy/v1.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:googleapis/youtube/v3.dart' as yt;
 import '../../../../env.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../config.dart';

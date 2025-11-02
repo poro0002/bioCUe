@@ -140,7 +140,7 @@ export const loginUser = async (
  
 
     try{
-      const result = await supabase.from('users').select('email, password, firsttimelogin').eq('email', email).single();
+      const result = await supabase.from('users').select('email, password, firsttimelogin, applehealthaccess').eq('email', email).single();
        
       
  if (!result.data) {
@@ -170,6 +170,7 @@ export const loginUser = async (
       user: {
         email: existingUser.email,
         firstTimeLogin: existingUser.firsttimelogin,
+        appleHealthAccess: existingUser.applehealthaccess
       },
     });
 
@@ -241,7 +242,7 @@ export const createGoogleUser = async (
       email,
       ...userData,
       firsttimelogin: false,
-      isloggedin: true
+      isloggedin: true,
     });
     
     const { error } = await supabase
@@ -261,6 +262,7 @@ export const createGoogleUser = async (
       message: 'User created', 
       success: true,
       email: email,
+      
     });
     
   } catch (e) {
@@ -365,7 +367,7 @@ export const checkUser = async (
   try {
     const result = await supabase
       .from('users')
-      .select('uuid, email, firsttimelogin')
+      .select('uuid, email, firsttimelogin, applehealthaccess')
       .eq('email', email)
       .single();
 
@@ -386,7 +388,8 @@ export const checkUser = async (
     return res.json({ 
       exists: true, 
       firstTimeLogin: result.data.firsttimelogin, // even if there is an account found, have they completed the onboarding questions ?
-      uuid: result.data.uuid
+      uuid: result.data.uuid,
+      appleHealthAccess: result.data.applehealthaccess
     });
   } catch (error) {
     console.error('Error checking user:', error);
@@ -394,3 +397,49 @@ export const checkUser = async (
   }
 };
 
+// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------< UPDATE APPLE HEALTH ACCESS >-----------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
+
+interface appleAccessBody{
+  email: string;
+  appleHealthAccess: boolean;
+}
+
+
+export const updateAppleHealthAccess = async(
+  req: Request<{}, {}, appleAccessBody>, res: Response,
+) =>{
+   const {email, appleHealthAccess} = req.body;
+   
+   console.log('Incoming email:', email);
+
+   const result = await supabase
+  .from('users')
+  .update({ applehealthaccess: appleHealthAccess }) // this prevents the camelCase mismatch that happens in supabase indexes
+  .eq('email', email);
+
+console.log('Supabase update result:', result);
+
+  if (result.error) {
+    console.log('Error updating applehealthaccess:', result.error);
+    return res.status(400).json({
+      message: 'Error updating applehealthaccess',
+      success: false,
+    });
+  }
+
+  if (result.count === 0 || !result.data) {
+    console.log('No rows matched for update');
+    return res.status(404).json({
+      message: 'No matching user found',
+      success: false,
+    });
+  }
+
+  console.log('Successfully updated applehealthaccess for:', email);
+  return res.status(200).json({
+    message: 'Successfully updated applehealthaccess',
+    success: true,
+  });
+}

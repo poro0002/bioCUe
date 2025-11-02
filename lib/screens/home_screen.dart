@@ -12,6 +12,8 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/home_widgets/journal_preview.dart';
+import '../widgets/home_widgets/subScreens/appleHealthKit.dart';
+import '../widgets/home_widgets/appleHealth.dart';
 
 // ---------------< Parent Widget >-----------------------------
 
@@ -103,6 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
             onHealingTap: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (context) => HealingCenter())),
+
+            onAppleTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (context) => AppleHealthKit())),
           ),
           JournalScreen(),
           ProgressScreen(),
@@ -126,6 +132,7 @@ class HomeDashboard extends StatelessWidget {
   final String? email;
   final VoidCallback onJournalTap; // wtf is a void callback
   final VoidCallback onHealingTap;
+  final VoidCallback onAppleTap;
 
   // ---------< Constructor >---------
   // heres what the widget NEEDs so it can function
@@ -135,6 +142,7 @@ class HomeDashboard extends StatelessWidget {
     required this.email,
     required this.onJournalTap,
     required this.onHealingTap,
+    required this.onAppleTap,
     super.key,
   });
 
@@ -163,6 +171,7 @@ class HomeDashboard extends StatelessWidget {
           JournalPreviewCard(onTap: onJournalTap),
           ExternalResources(),
           HealingContent(onTap: onHealingTap),
+          AppleHealth(onTap: onAppleTap),
         ],
       ),
     );

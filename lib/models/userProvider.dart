@@ -5,8 +5,6 @@ class UserProvider with ChangeNotifier {
   // This creates a private instance of your UserProfile model.
   UserProfile _profile = UserProfile();
 
-
-
   // This is a getter.
   // It lets other parts of your app read the _profile safely, without exposing it for direct modification.
   UserProfile get profile => _profile;
@@ -145,6 +143,12 @@ class UserProvider with ChangeNotifier {
   void completeFirstTimeSetup() {
     _profile.firstTimeLogin = false;
     print('firstTimeLogin var set to: ${_profile.firstTimeLogin}');
+    notifyListeners();
+  }
+
+  void setAppleAccess(bool value) {
+    _profile.appleHealthAccess = value;
+    print('apple health access set to: ${_profile.appleHealthAccess}');
     notifyListeners();
   }
 

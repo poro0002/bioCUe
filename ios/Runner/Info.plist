@@ -75,5 +75,11 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+
+	<!-- HealthKit privacy usage descriptions -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app reads your health data to provide personalized insights and tracking.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>This app writes health data to help track your activity and goals.</string>
 </dict>
 </plist>

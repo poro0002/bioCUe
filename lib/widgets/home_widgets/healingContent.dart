@@ -1,4 +1,3 @@
-import './subScreens/healingCenter.dart';
 import 'package:flutter/material.dart';
 
 //-------------------------< HEALING CENTER HOME WIDGET >-----------------------------------

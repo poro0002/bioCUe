@@ -1,5 +1,4 @@
 class UserProfile {
-
   // -----------------------------------------------------------------------------------------------
   // -------------------------------< Declare the variables >---------------------------------------
   // -----------------------------------------------------------------------------------------------
@@ -16,6 +15,7 @@ class UserProfile {
   bool isLoggedIn;
   String email;
   bool firstTimeLogin;
+  bool appleHealthAccess;
 
   // Health Info
   List<String> selectedIllnesses;
@@ -51,9 +51,10 @@ class UserProfile {
     this.isLoggedIn = false,
     this.email = '',
     this.firstTimeLogin = true,
+    this.appleHealthAccess = false,
   });
 
- // -----------------------------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------------------
   // -------------------------------< TO JSON >---------------------------------------
   // -----------------------------------------------------------------------------------------------
 
@@ -82,9 +83,10 @@ class UserProfile {
     'isLoggedIn': isLoggedIn,
     'firstTimeLogin': firstTimeLogin,
     'email': email,
+    'appleHealthAccess': appleHealthAccess,
   };
-  
-   // -----------------------------------------------------------------------------------------------
+
+  // -----------------------------------------------------------------------------------------------
   // -------------------------------< back to class code syntax >------------------------------------
   // ------------------------------------------------------------------------------------------------
 
@@ -115,6 +117,7 @@ class UserProfile {
       email: json['email'] ?? '',
       isLoggedIn: json['isLoggedIn'] ?? false,
       firstTimeLogin: json['firstTimeLogin'] ?? true,
+      appleHealthAccess: json['appleHealthAccess'] ?? false,
     );
   }
 }

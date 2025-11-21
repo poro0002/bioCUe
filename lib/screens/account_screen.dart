@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:biocue/models/userProvider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// this page will eventually update local and supabase state because ity will give users the option to update their personal questions data
+// amongst other things like push notifications toggles ect..
+
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 

@@ -31,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   late final StreamSubscription<supabase.AuthState> _authSubscription;
   bool _isGoogleLoading = false;
 
@@ -126,11 +127,17 @@ class _LoginScreenState extends State<LoginScreen> {
           final data = jsonDecode(response.body);
 
           final appleAccess = data['appleHealthAccess'] ?? false;
+          final fitBitAccess = data['hasFitBitAccess'] ?? false;
 
           Provider.of<UserProvider>(
             context,
             listen: false,
           ).setAppleAccess(appleAccess);
+
+          Provider.of<UserProvider>(
+            context,
+            listen: false,
+          ).setFitBitAccess(fitBitAccess);
 
           // If the user is new or it’s their first time logging in, you:
 
@@ -253,6 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = jsonDecode(response.body);
         final userEmail = data['user']['email'];
         final appleAccess = data['user']['appleHealthAccess'];
+        final fitBitAccess = data['user']['hasFitBitAccess'];
 
         Provider.of<UserProvider>(context, listen: false).setEmail(userEmail);
         Provider.of<UserProvider>(context, listen: false).login(userEmail);
@@ -260,6 +268,11 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           listen: false,
         ).setAppleAccess(appleAccess);
+
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).setFitBitAccess(fitBitAccess);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

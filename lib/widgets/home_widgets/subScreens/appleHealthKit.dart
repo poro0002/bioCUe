@@ -8,7 +8,6 @@ import '../../../config.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:async';
 
 class AppleHealthKit extends StatefulWidget {
   const AppleHealthKit({super.key});
@@ -17,31 +16,31 @@ class AppleHealthKit extends StatefulWidget {
   State<AppleHealthKit> createState() => _AppleHealthKitState();
 }
 
+// --------------------------------------------< State Class >------------------------------------------------------
+
+// all the totalMetaData variables, fetchHealthData() function and _convertAppleKitData() function will need to be moved to userProvider
+// this is so the function and metaData can be accessed globally and fetched when the user opens the app
+// this is so when a journal entry is executed, the data can be pulled from the provider and given to the langchain ai all in one go
+
 class _AppleHealthKitState extends State<AppleHealthKit> {
-  late bool
-  appleAccess; // late` lets you defer initialization until `initState()`------ late means “I promise I’ll initialize this before I use it” its a promise essentially
-  late bool hasAccess;
+  // late` lets you defer initialization until `initState()`------ late means “I promise I’ll initialize this before I use it” its a promise essentially
+  // late bools are not used now that the vars have been used to userProvider ^^^^disregard
 
-  double totalSteps = 0;
-  double totalSleepHours = 0;
-  double totalDistance = 0;
-  double totalCalories = 0;
-
-  double avgHR = 0;
-  double minHR = 0;
-  double maxHR = 0;
+  // initState runs once when the widget is first inserted into the widget tree. Think of it as the widget’s “constructor for state.”
+  // Used to initialize variables, start animations, set up listeners, or trigger async logic
 
   @override
   void initState() {
     super.initState();
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    appleAccess = userProvider.profile.appleHealthAccess;
-    hasAccess = appleAccess;
-
-    if (hasAccess) {
-      fetchHealthData(); // fetch the data if the hasAccess is already true
-    }
+    // Schedules this to run right after initState completes,
+    // ensuring the widget is mounted before accessing Provider (you can sometimes get errors if provider is accessed too early)
+    Future.microtask(() {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.hasAppleAccess) {
+        userProvider.fetchHealthData();
+      }
+    });
   }
 
   // for steps loop through all the returned HealthDataType.STEPS data and add it to a total sum variable ?
@@ -50,100 +49,15 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
   // get the total of  HealthDataType.ACTIVE_ENERGY_BURNED, and add it to the total of HealthDataType.BASAL_ENERGY_BURNED, to get total calories burned
   // get the total sum of HealthDataType.DISTANCE_WALKING_RUNNING,
 
-  void convertAppleKitData(List<HealthDataPoint> data) {
-    double steps = 0;
-    double sleep = 0;
-    double distance = 0;
-    double active = 0;
-    double basal = 0;
+  // --------------------------------------------< Convert Apple Data Function >------------------------------------------------------
 
-    List<double> heartRates = [];
+  // --------------------------------------------< Fetch Health Data Function >------------------------------------------------------
 
-    for (var point in data) {
-      if (point.value is! NumericHealthValue) continue;
-      final value = (point.value as NumericHealthValue).numericValue;
-
-      print('${point.type}: $value');
-
-      switch (point.type) {
-        case HealthDataType.STEPS:
-          steps += value;
-          break;
-        case HealthDataType.HEART_RATE:
-          heartRates.add(value.toDouble());
-          break;
-        case HealthDataType.SLEEP_ASLEEP:
-          sleep += value / 3600; // seconds → hours
-          break;
-        case HealthDataType.ACTIVE_ENERGY_BURNED:
-          active += value;
-          break;
-        case HealthDataType.BASAL_ENERGY_BURNED:
-          basal += value;
-          break;
-        case HealthDataType.DISTANCE_WALKING_RUNNING:
-          distance += value; // meters
-          break;
-        default:
-          break;
-      }
-    }
-
-    double avg = heartRates.isNotEmpty
-        ? heartRates.reduce((a, b) => a + b) / heartRates.length
-        : 0;
-    double min = heartRates.isNotEmpty
-        ? heartRates.reduce((a, b) => a < b ? a : b)
-        : 0;
-    double max = heartRates.isNotEmpty
-        ? heartRates.reduce((a, b) => a > b ? a : b)
-        : 0;
-
-    double totalCals = active + basal;
-
-    setState(() {
-      totalSteps = steps;
-      totalSleepHours = sleep;
-      totalDistance = distance;
-      totalCalories = totalCals;
-      avgHR = avg;
-      minHR = min;
-      maxHR = max;
-    });
-
-    // print('Steps: ${steps.toStringAsFixed(0)}');
-    // print('Sleep: ${sleep.toStringAsFixed(2)} hrs');
-    // print('Distance: ${(distance / 1000).toStringAsFixed(2)} km');
-    // print('Calories: ${totalCalories.toStringAsFixed(0)} kcal');
-    // print(
-    //   'Heart Rate: avg ${avg.toStringAsFixed(1)} bpm, min ${min.toStringAsFixed(0)}, max ${max.toStringAsFixed(0)}',
-    // );
-  }
-
-  Future<void> fetchHealthData() async {
-    final types = [
-      HealthDataType.STEPS,
-      HealthDataType.HEART_RATE,
-      HealthDataType.SLEEP_ASLEEP,
-      HealthDataType.ACTIVE_ENERGY_BURNED,
-      HealthDataType.DISTANCE_WALKING_RUNNING,
-      HealthDataType.BASAL_ENERGY_BURNED,
-    ];
-
-    final now = DateTime.now();
-    final yesterday = now.subtract(Duration(days: 1));
-
-    final data = await Health().getHealthDataFromTypes(
-      types: types,
-      startTime: yesterday,
-      endTime: now,
-    );
-
-    convertAppleKitData(data);
-    print('Fetched ${data.length} health data points');
-  }
+  // --------------------------------------------< GrantAccess Function >------------------------------------------------------
 
   Future<void> grantAccess() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     final types = [
       HealthDataType.STEPS,
       HealthDataType.HEART_RATE,
@@ -153,11 +67,27 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
       HealthDataType.BASAL_ENERGY_BURNED,
     ];
 
+    final permissions = [
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+    ];
+
     // Check if permissions are already granted
-    final hasPermissions = await Health().hasPermissions(types);
+    final hasPermissions = await Health().hasPermissions(
+      types,
+      permissions: permissions,
+    );
+    print('🔐 HealthKit permissions still valid: $hasPermissions');
 
     if (hasPermissions != true) {
-      final granted = await Health().requestAuthorization(types);
+      final granted = await Health().requestAuthorization(
+        types,
+        permissions: permissions,
+      );
       if (!granted) {
         print('Permission denied');
         return;
@@ -165,23 +95,42 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
     }
 
     final now = DateTime.now();
-    final yesterday = now.subtract(Duration(days: 1));
+    final twentyFourHour = now.subtract(
+      Duration(days: 1),
+    ); // or Duration(hours: 24)
 
-    // this returns a list of health data points
+    // this returns a list of health data points if permission has been granted
     final data = await Health().getHealthDataFromTypes(
       types: types,
-      startTime: yesterday,
+      startTime: twentyFourHour,
       endTime: now,
     );
-    setState(() {
-      // here we need to set the appleHealthAccess profile bool to true && we need to update the supabase bool for that user
-      hasAccess = true;
 
-      Provider.of<UserProvider>(
-        context,
-        listen: false,
-      ).setAppleAccess(hasAccess);
-    });
+    // extra shit for logging ---------------------------------------------------------------
+    print('Fetched ${data.length} health data points');
+
+    if (data.isEmpty) {
+      print(
+        ' No health data points returned. Check time window, permissions, and device sync.',
+      );
+    }
+
+    for (var point in data) {
+      print('RAW: ${point.type} → ${point.value}');
+
+      if (point.value is! NumericHealthValue) {
+        print('SKIPPED: ${point.type} is not numeric');
+        continue;
+      }
+
+      final value = (point.value as NumericHealthValue).numericValue;
+      print('PARSED: ${point.type} → $value');
+    }
+
+    // ^^^^^^^extra shit for logging ---------------------------------------------------------------
+
+    // here we need to set the appleHealthAccess profile bool to true && we need to update the supabase bool for that user
+    userProvider.setAppleAccess(true);
 
     // update the corro users applehealthaccess bool in the supabase database so the state is saved
 
@@ -190,7 +139,7 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
       final email = prefs.getString('email') ?? '';
       final response = await http.post(
         Uri.parse(
-          '${AppConfig.backendBaseUrl}/api/users/updateAppleHealthAccess',
+          '${AppConfig.backendBaseUrl}/api/appleHealth/updateAppleHealthAccess',
         ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'appleHealthAccess': true}),
@@ -225,21 +174,26 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
     //   ...
     // ]
 
-    convertAppleKitData(data);
+    userProvider.convertAppleKitData(data);
     print('Fetched ${data.length} health data points');
   }
 
+  // --------------------------------------------< Build Method >------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(
+      context,
+    ); // dont use listen: false here.... we want it true.  This will trigger a rebuild when notifyListeners() fires.
     return Scaffold(
       appBar: AppBar(title: const Text("Apple Health")),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (!hasAccess) ...[
+            if (!userProvider.hasAppleAccess) ...[
               // Apple logo or branding
               SizedBox(height: 50),
               Image.asset(
@@ -263,6 +217,14 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16),
               ),
+              SizedBox(height: 40),
+              Icon(Icons.warning, size: 30, color: Color(0xFFFF6F61)),
+
+              Text(
+                "For optimal data accuracy, an Apple Watch is recommended. Using only an iPhone may result in limited or less detailed health metrics.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
 
               SizedBox(height: 24),
 
@@ -273,15 +235,15 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
               ),
             ],
 
-            if (hasAccess)
+            if (userProvider.hasAppleAccess)
               AppleKitDataPlaceholders(
-                totalSteps: totalSteps,
-                totalSleepHours: totalSleepHours,
-                totalDistance: totalDistance,
-                totalCalories: totalCalories,
-                avgHR: avgHR,
-                minHR: minHR,
-                maxHR: maxHR,
+                totalSteps: userProvider.totalSteps,
+                totalSleepHours: userProvider.totalSleepHours,
+                totalDistance: userProvider.totalDistance,
+                totalCalories: userProvider.totalCalories,
+                avgHR: userProvider.avgHR,
+                minHR: userProvider.minHR,
+                maxHR: userProvider.maxHR,
               ),
             // Add more widgets here later
           ],
@@ -292,7 +254,7 @@ class _AppleHealthKitState extends State<AppleHealthKit> {
 }
 
 // --------------------------------------------------------------------------------------------
-// --------------------------------------------------------------------------------------------
+// -----------------------    Data PlaceHolder Child Widget ----------------------------------------------
 // --------------------------------------------------------------------------------------------
 
 class AppleKitDataPlaceholders extends StatelessWidget {
@@ -321,20 +283,30 @@ class AppleKitDataPlaceholders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = DateFormat.yMMMMd().format(DateTime.now());
+    final userProvider = Provider.of<UserProvider>(context);
+    final now = DateTime.now();
+    final yesterday = DateFormat.yMMMMd().format(
+      now.subtract(Duration(days: 1)),
+    );
+    final today = DateFormat.yMMMMd().format(now);
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Image.asset(
+            'assets/Apple_logo_white.svg.png',
+            width: 48, // adjust path to match your asset folder
+          ),
+          SizedBox(height: 24),
           Text(
-            'Today',
+            'Data For Dates',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-          Text(today, style: TextStyle(color: Colors.white)),
+          Text('$yesterday – $today', style: TextStyle(color: Colors.white)),
           SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -427,7 +399,7 @@ class AppleKitDataPlaceholders extends StatelessWidget {
                     Icon(Icons.place, size: 32, color: Color(0xFFFF6F61)),
                     SizedBox(height: 8),
                     Text(
-                      '${(totalDistance / 1609.344).toStringAsFixed(2)} mi',
+                      '$totalDistance mi',
                       style: TextStyle(color: Colors.black, fontSize: 14),
                     ),
                   ],
@@ -494,7 +466,7 @@ class AppleKitDataPlaceholders extends StatelessWidget {
                         Text('Low', style: TextStyle(color: Colors.black)),
                         SizedBox(height: 8),
                         Text(
-                          '$minHR',
+                          '$minHR BPM',
                           style: TextStyle(color: Colors.black, fontSize: 14),
                         ),
                       ],
@@ -516,7 +488,7 @@ class AppleKitDataPlaceholders extends StatelessWidget {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          '$avgHR',
+                          '$avgHR BPM',
                           style: TextStyle(color: Colors.black, fontSize: 14),
                         ),
                       ],
@@ -527,7 +499,7 @@ class AppleKitDataPlaceholders extends StatelessWidget {
                         Text('High', style: TextStyle(color: Colors.black)),
                         SizedBox(height: 8),
                         Text(
-                          '$maxHR',
+                          '$maxHR BPM',
                           style: TextStyle(color: Colors.black, fontSize: 14),
                         ),
                       ],
@@ -536,6 +508,11 @@ class AppleKitDataPlaceholders extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: userProvider.RevokeAppleAccess,
+            child: Text('Revoke Apple Health Access'),
           ),
         ],
       ),

@@ -16,6 +16,7 @@ class UserProfile {
   String email;
   bool firstTimeLogin;
   bool appleHealthAccess;
+  bool hasFitBitAccess;
 
   // Health Info
   List<String> selectedIllnesses;
@@ -52,6 +53,7 @@ class UserProfile {
     this.email = '',
     this.firstTimeLogin = true,
     this.appleHealthAccess = false,
+    this.hasFitBitAccess = false,
   });
 
   // -----------------------------------------------------------------------------------------------
@@ -84,6 +86,7 @@ class UserProfile {
     'firstTimeLogin': firstTimeLogin,
     'email': email,
     'appleHealthAccess': appleHealthAccess,
+    'hasFitBitAccess': hasFitBitAccess,
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -118,6 +121,7 @@ class UserProfile {
       isLoggedIn: json['isLoggedIn'] ?? false,
       firstTimeLogin: json['firstTimeLogin'] ?? true,
       appleHealthAccess: json['appleHealthAccess'] ?? false,
+      hasFitBitAccess: json['hasFitBitAccess'] ?? false,
     );
   }
 }

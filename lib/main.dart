@@ -28,10 +28,16 @@ void main() async {
 
   await prefs.setBool('isLoggedIn', isLoggedIn);
 
+  final userProvider = UserProvider();
+
+  if (isLoggedIn) {
+    await userProvider.restoreUserProfile();
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) =>
-          UserProvider(), // access user provider anywhere in the app as its at the top level
+          userProvider, // access user provider anywhere in the app as its at the top level
       child: MyApp(isLoggedIn: isLoggedIn),
     ),
   );

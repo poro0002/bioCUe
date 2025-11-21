@@ -14,6 +14,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/home_widgets/journal_preview.dart';
 import '../widgets/home_widgets/subScreens/appleHealthKit.dart';
 import '../widgets/home_widgets/appleHealth.dart';
+import '../widgets/home_widgets/fitbit.dart';
+import '../widgets/home_widgets/subScreens/fitBitKit.dart';
 
 // ---------------< Parent Widget >-----------------------------
 
@@ -109,6 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onAppleTap: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (context) => AppleHealthKit())),
+            onFitBitTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (context) => FitBitKit())),
           ),
           JournalScreen(),
           ProgressScreen(),
@@ -133,6 +138,7 @@ class HomeDashboard extends StatelessWidget {
   final VoidCallback onJournalTap; // wtf is a void callback
   final VoidCallback onHealingTap;
   final VoidCallback onAppleTap;
+  final VoidCallback onFitBitTap;
 
   // ---------< Constructor >---------
   // heres what the widget NEEDs so it can function
@@ -143,6 +149,7 @@ class HomeDashboard extends StatelessWidget {
     required this.onJournalTap,
     required this.onHealingTap,
     required this.onAppleTap,
+    required this.onFitBitTap,
     super.key,
   });
 
@@ -171,7 +178,22 @@ class HomeDashboard extends StatelessWidget {
           JournalPreviewCard(onTap: onJournalTap),
           ExternalResources(),
           HealingContent(onTap: onHealingTap),
-          AppleHealth(onTap: onAppleTap),
+          Row(
+            children: [
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 0.9,
+                  child: AppleHealth(onTap: onAppleTap),
+                ),
+              ),
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 0.9,
+                  child: FitBit(onTap: onFitBitTap),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

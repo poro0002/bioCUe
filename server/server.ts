@@ -12,7 +12,8 @@ import { supabase } from './utils/supabaseClient';
 import { PrismaClient } from '@prisma/client'
 import userRoutes from './routes/userRoutes'; 
 import restRoutes from './routes/restRoutes';
-
+import appleHealthRoutes from './routes/appleHealthRoutes';
+import fitBitRoutes from './routes/fitBitRoutes';
 
 
 const app = express(); // Initialize Express
@@ -39,7 +40,9 @@ app.use((req, res, next) => {
 
 // route to use the user controller exported functions 
 app.use('/api/users', userRoutes);
-app.use('/api/rest', restRoutes)
+app.use('/api/rest', restRoutes);
+app.use('/api/appleHealth', appleHealthRoutes);
+app.use('/api/fitBit', fitBitRoutes)
 
 
 

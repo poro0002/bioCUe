@@ -10,6 +10,9 @@ import nodemailer from 'nodemailer';
 import fs from 'fs-extra';
 import { supabase } from '../utils/supabaseClient'; // adjust path as needed
 import { PrismaClient } from '@prisma/client'
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Buffer } from 'buffer';
+import { URLSearchParams } from 'url';
 
 
 // -------------------------------------------------------------------------------------------------------------------------
@@ -140,7 +143,7 @@ export const loginUser = async (
  
 
     try{
-      const result = await supabase.from('users').select('email, password, firsttimelogin, applehealthaccess').eq('email', email).single();
+      const result = await supabase.from('users').select('email, password, firsttimelogin, applehealthaccess, fitbitaccess').eq('email', email).single();
        
       
  if (!result.data) {
@@ -170,7 +173,9 @@ export const loginUser = async (
       user: {
         email: existingUser.email,
         firstTimeLogin: existingUser.firsttimelogin,
-        appleHealthAccess: existingUser.applehealthaccess
+        appleHealthAccess: existingUser.applehealthaccess,
+        hasFitBitAccess: existingUser.fitbitaccess
+
       },
     });
 
@@ -367,13 +372,13 @@ export const checkUser = async (
   try {
     const result = await supabase
       .from('users')
-      .select('uuid, email, firsttimelogin, applehealthaccess')
+      .select('uuid, email, firsttimelogin, applehealthaccess, fitbitaccess' )
       .eq('email', email)
       .single();
 
       if (!email) {
-  return res.status(400).json({ error: 'Missing email query parameter' });
-}
+       return res.status(400).json({ error: 'Missing email query parameter' });
+      }
     
     if (result.error && result.error.code === 'PGRST116') {
       // User doesn't exist in custom table
@@ -389,57 +394,11 @@ export const checkUser = async (
       exists: true, 
       firstTimeLogin: result.data.firsttimelogin, // even if there is an account found, have they completed the onboarding questions ?
       uuid: result.data.uuid,
-      appleHealthAccess: result.data.applehealthaccess
+      appleHealthAccess: result.data.applehealthaccess,
+      hasFitBitAccess: result.data.fitbitaccess
     });
   } catch (error) {
     console.error('Error checking user:', error);
     return res.status(500).json({ error: 'Server error' });
   }
 };
-
-// -------------------------------------------------------------------------------------------------------------------------
-// --------------------------------------------------< UPDATE APPLE HEALTH ACCESS >-----------------------------------------
-// -------------------------------------------------------------------------------------------------------------------------
-
-interface appleAccessBody{
-  email: string;
-  appleHealthAccess: boolean;
-}
-
-
-export const updateAppleHealthAccess = async(
-  req: Request<{}, {}, appleAccessBody>, res: Response,
-) =>{
-   const {email, appleHealthAccess} = req.body;
-   
-   console.log('Incoming email:', email);
-
-   const result = await supabase
-  .from('users')
-  .update({ applehealthaccess: appleHealthAccess }) // this prevents the camelCase mismatch that happens in supabase indexes
-  .eq('email', email);
-
-console.log('Supabase update result:', result);
-
-  if (result.error) {
-    console.log('Error updating applehealthaccess:', result.error);
-    return res.status(400).json({
-      message: 'Error updating applehealthaccess',
-      success: false,
-    });
-  }
-
-  if (result.count === 0 || !result.data) {
-    console.log('No rows matched for update');
-    return res.status(404).json({
-      message: 'No matching user found',
-      success: false,
-    });
-  }
-
-  console.log('Successfully updated applehealthaccess for:', email);
-  return res.status(200).json({
-    message: 'Successfully updated applehealthaccess',
-    success: true,
-  });
-}

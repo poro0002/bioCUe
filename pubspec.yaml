@@ -73,6 +73,9 @@ flutter:
   assets:
         - assets/BioCue_logo_symbol.png
         - assets/Apple_logo_white.svg.png
+        - assets/Apple_logo_black.svg.png
+        - assets/Fitbit_logo.png
+        - assets/Fitbit_logo_white.png
         - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see

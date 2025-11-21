@@ -10,7 +10,9 @@
 
 // build THIS widget tomorrow as well and test it
 
+import 'package:biocue/models/userProvider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AppleHealth extends StatelessWidget {
   final VoidCallback onTap;
@@ -19,10 +21,11 @@ class AppleHealth extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.only(left: 16, right: 8, top: 8, bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -38,32 +41,56 @@ class AppleHealth extends StatelessWidget {
         child: Stack(
           // stack is similar to z-index allowing you to stack widgets on top of eachother
           children: [
-            const Positioned(
+            Positioned(
               top: 0,
-              left: 0,
-              child: Icon(Icons.favorite, size: 28, color: Color(0xFFFF6F61)),
+              left: 50,
+              child: Image.asset(
+                'assets/Apple_logo_black.svg.png',
+                width: 20, // match icon size or adjust as needed
+              ),
             ),
 
             Padding(
               padding: const EdgeInsets.only(
-                left: 36,
+                left: 10,
               ), // offset to avoid overlap
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
+                  SizedBox(height: 35),
                   Text(
-                    'Apple Health Kit',
+                    'Apple Health',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 15,
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Tap to see sync your Apple Health analytics to help track your symptoms',
-                    style: TextStyle(fontSize: 14, color: Colors.black),
+                    'Tap to sync Apple Health analytics to help track your symptoms',
+                    style: TextStyle(fontSize: 10, color: Colors.black),
                   ),
+                  SizedBox(height: 8),
+                  if (userProvider.hasAppleAccess) ...[
+                    Row(
+                      children: [
+                        Text(
+                          'Connected',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const Icon(
+                          Icons.check_circle,
+                          size: 20,
+                          color: Colors.green,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
